@@ -57,7 +57,6 @@ def validateURL(url):
         print ("Error validating URL.")
         return False, False
 
-
 def validate(filename, file_url):
     validFilename = validateFilename(filename)
     validURL, validFiletype = validateURL(file_url)
@@ -85,38 +84,33 @@ def convert_mth_strings ( mth_string ):
 
 #### VARIABLES 1.0
 
-entity_id = "E2632_BDC_gov"
-url = "https://www.broadland.gov.uk/info/200197/spending_and_transparency/339/council_spending_over_250"
+entity_id = "E1631_CBC_gov"
+url = "https://www.cheltenham.gov.uk/info/18/council_budgets_and_spending/1183/payments_to_suppliers/1"
 errors = 0
 data = []
-
 
 #### READ HTML 1.0
 
 html = urllib2.urlopen(url)
-soup = BeautifulSoup(html, 'lxml')
+soup = BeautifulSoup(html, "lxml")
+
 
 #### SCRAPE DATA
 
-links = soup.find('div', 'editor').find_all('a', href=True)
-for link in links:
-    if 'http' not in link['href']:
-        year_url = 'https://www.broadland.gov.uk' + link['href']
+blocks = soup.find('div', 'editor editor--document').find_all('a', href=True)
+for block in blocks:
+    if 'http' not in block['href']:
+        year_url = 'https://www.portsmouth.gov.uk' + block['href']
     else:
-        year_url = link['href']
+        year_url = block['href']
+    csvYr = block.text
     year_html = urllib2.urlopen(year_url)
-    year_soup = BeautifulSoup(year_html, 'lxml')
-    blocks = year_soup.find_all('span', 'download-listing__file-tag download-listing__file-tag--type')
-    for block in blocks:
-        if 'CSV' in block.text:
-            url = block.find_next('a')['href']
-            if 'http' not in url:
-                url = 'https://www.broadland.gov.uk' + url
-            else:
-                url = url
-            file_name = block.find_next('a')['aria-label']
-            csvMth = file_name.split()[-2][:3]
-            csvYr = file_name.split()[-1]
+    year_soup = BeautifulSoup(year_html, "lxml")
+    year_links = year_soup.find('ul', 'item-list item-list--rich').find_all('a', href=True)
+    for year_link in year_links:
+        if 'csv' in year_link['href']:
+            url = year_link['href'].replace('/downloads/file/', '/download/downloads/id/')+'.csv'
+            csvMth = year_link.text.replace('Amended', '').strip()[:3]
             csvMth = convert_mth_strings(csvMth.upper())
             data.append([csvYr, csvMth, url])
 
@@ -142,3 +136,4 @@ if errors > 0:
 
 
 #### EOF
+
